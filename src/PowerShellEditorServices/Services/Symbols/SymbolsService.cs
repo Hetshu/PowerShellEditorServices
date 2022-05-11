@@ -65,7 +65,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
             _workspaceService = workspaceService;
 
             _codeLensProviders = new ConcurrentDictionary<string, ICodeLensProvider>();
-            var codeLensProviders = new ICodeLensProvider[]
+            ICodeLensProvider[] codeLensProviders = new ICodeLensProvider[]
             {
                 new ReferencesCodeLensProvider(_workspaceService, this),
                 new PesterCodeLensProvider(configurationService)
@@ -77,7 +77,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
             }
 
             _documentSymbolProviders = new ConcurrentDictionary<string, IDocumentSymbolProvider>();
-            var documentSymbolProviders = new IDocumentSymbolProvider[]
+            IDocumentSymbolProvider[] documentSymbolProviders = new IDocumentSymbolProvider[]
             {
                 new ScriptDocumentSymbolProvider(),
                 new PsdDocumentSymbolProvider(),
@@ -91,35 +91,17 @@ namespace Microsoft.PowerShell.EditorServices.Services
 
         #endregion
 
-        public bool TryResgisterCodeLensProvider(ICodeLensProvider codeLensProvider)
-        {
-            return _codeLensProviders.TryAdd(codeLensProvider.ProviderId, codeLensProvider);
-        }
+        public bool TryRegisterCodeLensProvider(ICodeLensProvider codeLensProvider) => _codeLensProviders.TryAdd(codeLensProvider.ProviderId, codeLensProvider);
 
-        public bool DeregisterCodeLensProvider(string providerId)
-        {
-            return _codeLensProviders.TryRemove(providerId, out _);
-        }
+        public bool DeregisterCodeLensProvider(string providerId) => _codeLensProviders.TryRemove(providerId, out _);
 
-        public IEnumerable<ICodeLensProvider> GetCodeLensProviders()
-        {
-            return _codeLensProviders.Values;
-        }
+        public IEnumerable<ICodeLensProvider> GetCodeLensProviders() => _codeLensProviders.Values;
 
-        public bool TryRegisterDocumentSymbolProvider(IDocumentSymbolProvider documentSymbolProvider)
-        {
-            return _documentSymbolProviders.TryAdd(documentSymbolProvider.ProviderId, documentSymbolProvider);
-        }
+        public bool TryRegisterDocumentSymbolProvider(IDocumentSymbolProvider documentSymbolProvider) => _documentSymbolProviders.TryAdd(documentSymbolProvider.ProviderId, documentSymbolProvider);
 
-        public bool DeregisterDocumentSymbolProvider(string providerId)
-        {
-            return _documentSymbolProviders.TryRemove(providerId, out _);
-        }
+        public bool DeregisterDocumentSymbolProvider(string providerId) => _documentSymbolProviders.TryRemove(providerId, out _);
 
-        public IEnumerable<IDocumentSymbolProvider> GetDocumentSymbolProviders()
-        {
-            return _documentSymbolProviders.Values;
-        }
+        public IEnumerable<IDocumentSymbolProvider> GetDocumentSymbolProviders() => _documentSymbolProviders.Values;
 
         /// <summary>
         /// Finds all the symbols in a file.
@@ -130,7 +112,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
         {
             Validate.IsNotNull(nameof(scriptFile), scriptFile);
 
-            var foundOccurrences = new List<SymbolReference>();
+            List<SymbolReference> foundOccurrences = new();
             foreach (IDocumentSymbolProvider symbolProvider in GetDocumentSymbolProviders())
             {
                 foreach (SymbolReference reference in symbolProvider.ProvideDocumentSymbols(scriptFile))
@@ -149,7 +131,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
         /// </summary>
         /// <param name="scriptFile">The details and contents of a open script file</param>
         /// <param name="lineNumber">The line number of the cursor for the given script</param>
-        /// <param name="columnNumber">The coulumn number of the cursor for the given script</param>
+        /// <param name="columnNumber">The column number of the cursor for the given script</param>
         /// <returns>A SymbolReference of the symbol found at the given location
         /// or null if there is no symbol at that location
         /// </returns>
@@ -193,7 +175,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
 
             // We want to look for references first in referenced files, hence we use ordered dictionary
             // TODO: File system case-sensitivity is based on filesystem not OS, but OS is a much cheaper heuristic
-            var fileMap = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            OrderedDictionary fileMap = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 ? new OrderedDictionary()
                 : new OrderedDictionary(StringComparer.OrdinalIgnoreCase);
 
@@ -216,10 +198,10 @@ namespace Microsoft.PowerShell.EditorServices.Services
                 }
             }
 
-            var symbolReferences = new List<SymbolReference>();
+            List<SymbolReference> symbolReferences = new();
             foreach (object fileName in fileMap.Keys)
             {
-                var file = (ScriptFile)fileMap[fileName];
+                ScriptFile file = (ScriptFile)fileMap[fileName];
 
                 IEnumerable<SymbolReference> references = AstOperations.FindReferencesOfSymbol(
                     file.ScriptAst,
@@ -247,11 +229,11 @@ namespace Microsoft.PowerShell.EditorServices.Services
         }
 
         /// <summary>
-        /// Finds all the occurences of a symbol in the script given a file location
+        /// Finds all the occurrences of a symbol in the script given a file location
         /// </summary>
         /// <param name="file">The details and contents of a open script file</param>
         /// <param name="symbolLineNumber">The line number of the cursor for the given script</param>
-        /// <param name="symbolColumnNumber">The coulumn number of the cursor for the given script</param>
+        /// <param name="symbolColumnNumber">The column number of the cursor for the given script</param>
         /// <returns>FindOccurrencesResult</returns>
         public static IReadOnlyList<SymbolReference> FindOccurrencesInFile(
             ScriptFile file,
@@ -276,7 +258,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
         /// </summary>
         /// <param name="scriptFile">The details and contents of a open script file</param>
         /// <param name="lineNumber">The line number of the cursor for the given script</param>
-        /// <param name="columnNumber">The coulumn number of the cursor for the given script</param>
+        /// <param name="columnNumber">The column number of the cursor for the given script</param>
         /// <returns>A SymbolReference of the symbol found at the given location
         /// or null if there is no symbol at that location
         /// </returns>
@@ -335,7 +317,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
         /// </summary>
         /// <param name="file">The details and contents of a open script file</param>
         /// <param name="lineNumber">The line number of the cursor for the given script</param>
-        /// <param name="columnNumber">The coulumn number of the cursor for the given script</param>
+        /// <param name="columnNumber">The column number of the cursor for the given script</param>
         /// <returns>ParameterSetSignatures</returns>
         public async Task<ParameterSetSignatures> FindParameterSetsInFileAsync(
             ScriptFile file,
@@ -351,8 +333,8 @@ namespace Microsoft.PowerShell.EditorServices.Services
             // If we are not possibly looking at a Function, we don't
             // need to continue because we won't be able to get the
             // CommandInfo object.
-            if (foundSymbol?.SymbolType != SymbolType.Function
-                && foundSymbol?.SymbolType != SymbolType.Unknown)
+            if (foundSymbol?.SymbolType is not SymbolType.Function
+                and not SymbolType.Unknown)
             {
                 return null;
             }
@@ -423,7 +405,7 @@ namespace Microsoft.PowerShell.EditorServices.Services
                 _workspaceService.ExpandScriptReferences(
                     sourceFile);
 
-            var filesSearched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> filesSearched = new(StringComparer.OrdinalIgnoreCase);
 
             // look through the referenced files until definition is found
             // or there are no more file to look through
@@ -560,8 +542,8 @@ namespace Microsoft.PowerShell.EditorServices.Services
 
             // find any files where the moduleInfo's path ends with ps1 or psm1
             // and add it to allowed script files
-            if (modPath.EndsWith(@".ps1", StringComparison.OrdinalIgnoreCase) ||
-                modPath.EndsWith(@".psm1", StringComparison.OrdinalIgnoreCase))
+            if (modPath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                modPath.EndsWith(".psm1", StringComparison.OrdinalIgnoreCase))
             {
                 newFile = _workspaceService.GetFile(modPath);
                 newFile.IsAnalysisEnabled = false;
@@ -573,8 +555,8 @@ namespace Microsoft.PowerShell.EditorServices.Services
                 foreach (PSModuleInfo nestedInfo in moduleInfo.NestedModules)
                 {
                     string nestedModPath = nestedInfo.Path;
-                    if (nestedModPath.EndsWith(@".ps1", StringComparison.OrdinalIgnoreCase) ||
-                        nestedModPath.EndsWith(@".psm1", StringComparison.OrdinalIgnoreCase))
+                    if (nestedModPath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                        nestedModPath.EndsWith(".psm1", StringComparison.OrdinalIgnoreCase))
                     {
                         newFile = _workspaceService.GetFile(nestedModPath);
                         newFile.IsAnalysisEnabled = false;
